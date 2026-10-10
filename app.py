@@ -232,6 +232,7 @@ with st.sidebar:
     st.caption("Learn smarter. Grow stronger.")
 
 
+
 # ---------- HOME DASHBOARD ----------
 if st.session_state.page == "Home":
 
@@ -254,72 +255,103 @@ if st.session_state.page == "Home":
         unsafe_allow_html=True
     )
 
-    st.write("")
-
     col1, col2, col3 = st.columns(3, gap="medium")
 
     with col1:
-        st.markdown(
-            """
-            <div class="study-card">
-                <h3>📚 Study Chat</h3>
-                <p>Ask academic questions and get explanations
-                designed to help you understand your subjects.</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.markdown("""
+        <div class="study-card">
+            <h3>📚 Study Chat</h3>
+            <p>Ask questions and understand your subjects.</p>
+        </div>
+        """, unsafe_allow_html=True)
 
         if st.button("Open Study Chat", key="open_chat"):
             st.session_state.page = "Study Chat"
             st.rerun()
 
     with col2:
-        st.markdown(
-            """
-            <div class="study-card">
-                <h3>📝 Summarizer</h3>
-                <p>Turn long notes and chapters into clear,
-                concise summaries for revision.</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.markdown("""
+        <div class="study-card">
+            <h3>📝 Summarizer</h3>
+            <p>Turn lengthy notes into simple summaries.</p>
+        </div>
+        """, unsafe_allow_html=True)
 
         if st.button("Open Summarizer", key="open_summary"):
             st.session_state.page = "Summarizer"
             st.rerun()
 
     with col3:
-        st.markdown(
-            """
-            <div class="study-card">
-                <h3>🧠 Quiz Studio</h3>
-                <p>Generate practice questions from your topics
-                and check how well you understand them.</p>
-            </div>
-            """,
-            unsafe_allow_html=True
-        )
+        st.markdown("""
+        <div class="study-card">
+            <h3>🧠 Quiz Studio</h3>
+            <p>Generate quizzes to test your knowledge.</p>
+        </div>
+        """, unsafe_allow_html=True)
 
         if st.button("Open Quiz Studio", key="open_quiz"):
             st.session_state.page = "Quiz Studio"
             st.rerun()
 
-    st.write("")
+    # ---------- CO-FOUNDERS SECTION ----------
     st.divider()
 
-    st.markdown(
-        f"""
-        <p style="text-align:center;color:{GOLD};font-weight:bold;">
-            Made for curious minds 💚
+    st.markdown("""
+    <div style="text-align:center; padding:25px 0 20px;">
+        <h1 style="color:#FFD700 !important;">
+            Meet Our Co-Founders
+        </h1>
+        <p style="color:white !important; font-size:17px;">
+            The minds behind StudyMate AI
         </p>
-        <p style="text-align:center;">
+    </div>
+    """, unsafe_allow_html=True)
+
+    founder1, founder2, founder3 = st.columns(3, gap="medium")
+
+    founders = [
+        (founder1, "Arjun Panchal"),
+        (founder2, "Swwara Acharya"),
+        (founder3, "Tanbi Mondal"),
+    ]
+
+    for column, name in founders:
+        with column:
+            st.markdown(
+                f"""
+                <div style="
+                    background:#102F20;
+                    border:2px solid #FFD700;
+                    border-radius:16px;
+                    padding:25px 8px;
+                    text-align:center;
+                    min-height:125px;
+                ">
+                    <div style="font-size:35px;">👑</div>
+                    <h3 style="
+                        color:#FFD700 !important;
+                        font-size:18px;
+                    ">{name}</h3>
+                    <p style="
+                        color:white !important;
+                        font-size:14px;
+                    ">Co-Founder</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    st.markdown("""
+    <div style="text-align:center; padding:30px 0 10px;">
+        <p style="color:#FFD700 !important;">
+            © 2026 StudyMate AI | Built for students 💚
+        </p>
+        <p style="color:white !important;">
             Tree House High School
         </p>
-        """,
-        unsafe_allow_html=True
-    )
+    </div>
+    """, unsafe_allow_html=True)
+
 
 
 # ---------- STUDY CHAT ----------
@@ -497,7 +529,6 @@ elif st.session_state.page == "Quiz Studio":
             file_name="studymate_quiz.txt",
             mime="text/plain"
         )
-
     # ---------- MEET OUR FOUNDERS ----------
 
     st.markdown(
