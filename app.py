@@ -1,39 +1,61 @@
-import streamlit as st
-import ollama
 
+import streamlit as st
+from google import genai
+
+# ---------------- APP CONFIG ----------------
 st.set_page_config(
     page_title="StudyMate AI",
     page_icon="🎓",
-    layout="centered"
+    layout="centered",
 )
 
 st.title("🎓 StudyMate AI")
 st.subheader("Your personal study companion")
 st.write("Learn smarter. Revise faster. Do your best!")
 
+# ---------------- GEMINI CONNECTION ----------------
+def ask_ai(prompt):
+    if "GEMINI_API_KEY" not in st.secrets:
+        raise RuntimeError(
+            "Gemini API key is not configured yet. "
+            "Add GEMINI_API_KEY in Streamlit Secrets."
+        )
+
+    client = genai.Client(
+        api_key=st.secrets["GEMINI_API_KEY"]
+    )
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=prompt,
+        config={
+            "system_instruction": (
+                "You are StudyMate AI, a helpful school tutor. "
+                "Explain concepts clearly at Class 10 CBSE level. "
+                "Be accurate, use examples, show working for maths, "
+                "and admit uncertainty when needed."
+            )
+        },
+    )
+
+    if not response.text:
+        raise RuntimeError(
+            "Gemini returned an empty response. Please try again."
+        )
+
+    return response.text
+
+
+# ---------------- SIDEBAR ----------------
 tool = st.sidebar.selectbox(
     "Choose your study tool",
-    ["Study Chat", "Summarizer", "Quiz Maker"]
+    ["Study Chat", "Summarizer", "Quiz Maker"],
 )
 
-def ask_ai(prompt):
-    response = ollama.chat(
-        model="llama3.2:3b",
-        messages=[
-            {
-                "role": "system",
-                "content": (
-                    "You are StudyMate AI, a helpful school tutor. "
-                    "Explain concepts clearly at Class 10 CBSE level. "
-                    "Be accurate, use examples, and admit uncertainty "
-                    "when needed."
-                )
-            },
-            {"role": "user", "content": prompt}
-        ]
-    )
-    return response["message"]["content"]
+st.sidebar.caption("StudyMate AI | Powered by Gemini")
 
+
+# ---------------- STUDY CHAT ----------------
 if tool == "Study Chat":
     st.header("💬 Study Chat")
     question = st.text_input("Ask any school question")
@@ -43,59 +65,79 @@ if tool == "Study Chat":
             with st.spinner("StudyMate is thinking..."):
                 try:
                     st.markdown(ask_ai(question))
-                except Exception as e:
+                except Exception:
                     st.error(
-                        "Could not connect to Ollama. "
-                        "Make sure Ollama is running."
+                        "Gemini couldn't answer right now. "
+                        "Check your Streamlit Secrets and API key, "
+                        "then try again."
                     )
-                    st.caption(str(e))
         else:
             st.warning("Please type a question first.")
 
+
+# ---------------- SUMMARIZER ----------------
 elif tool == "Summarizer":
     st.header("📝 Text Summarizer")
-    text = st.text_area("Paste your study notes here")
+    notes = st.text_area("Paste your study notes here")
+
+    style = st.selectbox(
+        "Summary style",
+        [
+            "Concise revision points",
+            "Important definitions",
+            "Exam-focused summary",
+        ],
+    )
 
     if st.button("Summarize"):
-        if text.strip():
+        if notes.strip():
+            prompt = (
+                f"Create {style.lower()} for a Class 10 CBSE student. "
+                "Use clear headings and bullet points. Preserve "
+                "important facts and do not invent information.\n\n"
+                f"{notes}"
+            )
+
             with st.spinner("Summarizing your notes..."):
                 try:
-                    st.markdown(
-                        ask_ai(
-                            "Summarize these notes into concise "
-                            "Class 10 revision points:\n\n" + text
-                        )
+                    st.markdown(ask_ai(prompt))
+                except Exception:
+                    st.error(
+                        "Gemini couldn't summarize the notes. "
+                        "Check your API configuration and try again."
                     )
-                except Exception as e:
-                    st.error("Could not connect to Ollama.")
-                    st.caption(str(e))
         else:
             st.warning("Please paste some notes first.")
 
+
+# ---------------- QUIZ MAKER ----------------
 elif tool == "Quiz Maker":
     st.header("🧠 Quiz Maker")
     topic = st.text_input("Enter a topic")
+
     difficulty = st.selectbox(
-        "Difficulty", ["Easy", "Medium", "Hard"]
+        "Difficulty",
+        ["Easy", "Medium", "Hard"],
     )
 
     if st.button("Create Quiz"):
         if topic.strip():
+            prompt = (
+                f"Create exactly 5 {difficulty.lower()} difficulty "
+                f"quiz questions about {topic} for a Class 10 CBSE "
+                "student. Use multiple-choice questions with four "
+                "options each. Clearly identify the correct answer "
+                "and provide a brief explanation after each question. "
+                "Use accurate educational information."
+            )
+
             with st.spinner("Creating your quiz..."):
                 try:
-                    st.markdown(
-                        ask_ai(
-                            f"Create 5 {difficulty.lower()} difficulty "
-                            f"Class 10 quiz questions on {topic}. "
-                            "Include multiple-choice options, then give "
-                            "an answer key with brief explanations "
-                            "at the end."
-                        )
+                    st.markdown(ask_ai(prompt))
+                except Exception:
+                    st.error(
+                        "Gemini couldn't create the quiz. "
+                        "Check your API configuration and try again."
                     )
-                except Exception as e:
-                    st.error("Could not connect to Ollama.")
-                    st.caption(str(e))
         else:
             st.warning("Please enter a topic.")
-
-st.sidebar.caption("StudyMate AI | Powered by Ollama")
