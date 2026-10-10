@@ -186,12 +186,22 @@ if "quiz_result" not in st.session_state:
     st.session_state.quiz_result = ""
 
 
+
 # ---------- GEMINI CLIENT ----------
+from google.genai import types
+
 def get_gemini_client():
     try:
         api_key = st.secrets["GEMINI_API_KEY"]
-        return genai.Client(api_key=api_key)
-    except Exception:
+
+        return genai.Client(
+            api_key=api_key,
+            http_options=types.HttpOptions(
+                timeout=30000
+            )
+        )
+    except Exception as error:
+        print(f"Gemini client error: {error}")
         return None
 
 
@@ -199,10 +209,6 @@ def ask_gemini(prompt):
     client = get_gemini_client()
 
     if client is None:
-        st.error(
-            "Gemini API key not found. Add GEMINI_API_KEY "
-            "to your Streamlit Community Cloud secrets."
-        )
         return None
 
     try:
@@ -210,12 +216,18 @@ def ask_gemini(prompt):
             model="gemini-3.8-flash",
             contents=prompt
         )
-        return response.text
-    except Exception as error:
-        st.error(f"Something went wrong: {error}")
+
+        answer = response.text
+
+        if answer and answer.strip():
+            return answer.strip()
+
+        print("Gemini returned an empty response.")
         return None
 
-
+    except Exception as error:
+        print(f"Gemini API error: {error}")
+        return None
 # ---------- SIDEBAR ----------
 with st.sidebar:
     st.image(LOGO_URL, width=170)
@@ -374,6 +386,7 @@ if st.session_state.page == "Home":
     """, unsafe_allow_html=True)
 
 
+
 # ---------- STUDY CHAT ----------
 elif st.session_state.page == "Study Chat":
 
@@ -392,6 +405,7 @@ elif st.session_state.page == "Study Chat":
         ]
     )
 
+    # Display saved messages
     for message in st.session_state.chat_history:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
@@ -399,9 +413,11 @@ elif st.session_state.page == "Study Chat":
     question = st.chat_input("Ask your study question...")
 
     if question:
-        st.session_state.chat_history.append(
-            {"role": "user", "content": question}
-        )
+        # Save the question
+        st.session_state.chat_history.append({
+            "role": "user",
+            "content": question
+        })
 
         with st.chat_message("user"):
             st.markdown(question)
@@ -421,17 +437,23 @@ elif st.session_state.page == "Study Chat":
                     f"Conversation:\n{history_text}"
                 )
 
-                if answer:
-                    st.markdown(answer)
-                    st.session_state.chat_history.append(
-                        {"role": "assistant", "content": answer}
-                    )
+            if answer:
+                st.markdown(answer)
+
+                st.session_state.chat_history.append({
+                    "role": "assistant",
+                    "content": answer
+                })
+            else:
+                st.warning(
+                    "StudyMate couldn't get an answer this time. "
+                    "Please try again. If the problem continues, "
+                    "check the app logs."
+                )
 
     if st.button("Clear Chat", key="clear_chat"):
         st.session_state.chat_history = []
         st.rerun()
-
-
 # ---------- SUMMARIZER ----------
 elif st.session_state.page == "Summarizer":
 
