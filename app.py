@@ -204,7 +204,7 @@ def get_gemini_client():
 def ask_gemini(prompt):
     client = get_gemini_client()
 
-   if client is None:
+       if client is None:
         return None
 
     try:
