@@ -497,3 +497,69 @@ elif st.session_state.page == "Quiz Studio":
             file_name="studymate_quiz.txt",
             mime="text/plain"
         )
+
+    # ---------- MEET OUR FOUNDERS ----------
+
+    st.markdown(
+        """
+        <div style="text-align:center; padding:35px 0 20px 0;">
+            <h1 style="color:#FFD700 !important;">
+                Meet Our Founders
+            </h1>
+            <p style="color:white !important; font-size:17px;">
+                Built with ambition. Powered by AI.
+                Designed for students.
+            </p>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    founder1, founder2, founder3 = st.columns(3, gap="medium")
+
+    founders = [
+        (founder1, "Arjun Panchal"),
+        (founder2, "Swwara Acharya"),
+        (founder3, "Tanbi Mondal"),
+    ]
+
+    for column, name in founders:
+        with column:
+            st.markdown(
+                f"""
+                <div style="
+                    background:linear-gradient(135deg,#1E1B4B,#111827);
+                    border:1px solid #4C1D95;
+                    border-radius:16px;
+                    padding:22px 8px;
+                    text-align:center;
+                    min-height:140px;
+                ">
+                    <div style="font-size:32px;">👤</div>
+                    <h3 style="
+                        color:white !important;
+                        font-size:18px;
+                        margin:10px 0;
+                    ">{name}</h3>
+                    <p style="
+                        color:#C4B5FD !important;
+                        font-size:14px;
+                        margin:0;
+                    ">Co-Founder</p>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+    st.markdown(
+        """
+        <div style="
+            text-align:center;
+            padding:28px 0 10px 0;
+            color:#FFFFFF;
+        ">
+            © 2026 StudyMate AI
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
