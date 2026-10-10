@@ -185,8 +185,6 @@ if "summary_result" not in st.session_state:
 if "quiz_result" not in st.session_state:
     st.session_state.quiz_result = ""
 
-
-
 # ---------- GEMINI CLIENT ----------
 from google.genai import types
 
@@ -203,12 +201,10 @@ def get_gemini_client():
     except Exception as error:
         print(f"Gemini client error: {error}")
         return None
-
-
 def ask_gemini(prompt):
     client = get_gemini_client()
 
-    if client is None:
+   if client is None:
         return None
 
     try:
