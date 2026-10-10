@@ -1,6 +1,7 @@
+
 import streamlit as st
 from google import genai
-from google.genai import types
+from html import escape
 
 # ==========================================
 # STUDYMATE AI — TREE HOUSE HIGH SCHOOL
@@ -28,7 +29,6 @@ LOGO_URL = (
 st.markdown(
     f"""
     <style>
-    /* Main application background */
     .stApp {{
         background-color: {GREEN};
         color: {WHITE};
@@ -46,7 +46,6 @@ st.markdown(
         color: {WHITE};
     }}
 
-    /* Main headings */
     h1, h2, h3 {{
         color: {GOLD} !important;
         font-weight: 800 !important;
@@ -88,20 +87,47 @@ st.markdown(
         color: {BLACK} !important;
     }}
 
-    /* Input fields */
+    /* Text inputs and text areas */
     .stTextInput input,
     .stTextArea textarea,
     .stNumberInput input {{
         background-color: {WHITE} !important;
         color: {BLACK} !important;
+        -webkit-text-fill-color: {BLACK} !important;
+        caret-color: {BLACK} !important;
         border-radius: 8px !important;
+    }}
+
+    /* STUDY CHAT — MESSAGE BOX TEXT IN BLACK */
+    [data-testid="stChatInput"] {{
+        background-color: {WHITE} !important;
+        border: 2px solid {GOLD} !important;
+        border-radius: 12px !important;
+    }}
+
+    [data-testid="stChatInput"] textarea,
+    [data-testid="stChatInput"] textarea:focus {{
+        color: {BLACK} !important;
+        -webkit-text-fill-color: {BLACK} !important;
+        caret-color: {BLACK} !important;
+        background-color: {WHITE} !important;
+    }}
+
+    [data-testid="stChatInput"] textarea::placeholder {{
+        color: #555555 !important;
+        -webkit-text-fill-color: #555555 !important;
+        opacity: 1 !important;
+    }}
+
+    [data-testid="stChatInput"] button {{
+        color: {BLACK} !important;
     }}
 
     .stSelectbox div[data-baseweb="select"] {{
         color: {BLACK} !important;
     }}
 
-    /* White content cards */
+    /* Content cards */
     .study-card {{
         background-color: {WHITE};
         color: {BLACK};
@@ -162,7 +188,6 @@ if "quiz_result" not in st.session_state:
 
 # ---------- GEMINI CLIENT ----------
 def get_gemini_client():
-    """Create a Gemini client using Streamlit secrets."""
     try:
         api_key = st.secrets["GEMINI_API_KEY"]
         return genai.Client(api_key=api_key)
@@ -171,7 +196,6 @@ def get_gemini_client():
 
 
 def ask_gemini(prompt):
-    """Send a prompt to Gemini and return its response."""
     client = get_gemini_client()
 
     if client is None:
@@ -202,7 +226,6 @@ with st.sidebar:
     )
 
     st.caption("Your personal AI study companion")
-
     st.divider()
 
     if st.button("🏠 Home", key="nav_home"):
@@ -230,7 +253,6 @@ with st.sidebar:
     )
 
     st.caption("Learn smarter. Grow stronger.")
-
 
 
 # ---------- HOME DASHBOARD ----------
@@ -293,15 +315,15 @@ if st.session_state.page == "Home":
             st.session_state.page = "Quiz Studio"
             st.rerun()
 
-    # ---------- CO-FOUNDERS SECTION ----------
+    # ---------- CO-FOUNDERS ----------
     st.divider()
 
     st.markdown("""
-    <div style="text-align:center; padding:25px 0 20px;">
+    <div style="text-align:center;padding:25px 0 20px;">
         <h1 style="color:#FFD700 !important;">
             Meet Our Co-Founders
         </h1>
-        <p style="color:white !important; font-size:17px;">
+        <p style="color:white !important;font-size:17px;">
             The minds behind StudyMate AI
         </p>
     </div>
@@ -328,21 +350,20 @@ if st.session_state.page == "Home":
                     min-height:125px;
                 ">
                     <div style="font-size:35px;">👑</div>
-                    <h3 style="
-                        color:#FFD700 !important;
-                        font-size:18px;
-                    ">{name}</h3>
-                    <p style="
-                        color:white !important;
-                        font-size:14px;
-                    ">Co-Founder</p>
+                    <h3 style="color:#FFD700 !important;
+                               font-size:18px;">
+                        {escape(name)}
+                    </h3>
+                    <p style="color:white !important;font-size:14px;">
+                        Co-Founder
+                    </p>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
 
     st.markdown("""
-    <div style="text-align:center; padding:30px 0 10px;">
+    <div style="text-align:center;padding:30px 0 10px;">
         <p style="color:#FFD700 !important;">
             © 2026 StudyMate AI | Built for students 💚
         </p>
@@ -351,7 +372,6 @@ if st.session_state.page == "Home":
         </p>
     </div>
     """, unsafe_allow_html=True)
-
 
 
 # ---------- STUDY CHAT ----------
@@ -407,7 +427,7 @@ elif st.session_state.page == "Study Chat":
                         {"role": "assistant", "content": answer}
                     )
 
-    if st.button("Clear Chat"):
+    if st.button("Clear Chat", key="clear_chat"):
         st.session_state.chat_history = []
         st.rerun()
 
@@ -454,8 +474,7 @@ elif st.session_state.page == "Summarizer":
         st.markdown("### Your Summary")
         st.markdown(
             f'<div class="study-card">'
-            f'{st.session_state.summary_result}'
-            f'</div>',
+            f'{escape(st.session_state.summary_result)}</div>',
             unsafe_allow_html=True
         )
 
@@ -529,68 +548,3 @@ elif st.session_state.page == "Quiz Studio":
             file_name="studymate_quiz.txt",
             mime="text/plain"
         )
-    # ---------- MEET OUR FOUNDERS ----------
-
-    st.markdown(
-        """
-        <div style="text-align:center; padding:35px 0 20px 0;">
-            <h1 style="color:#FFD700 !important;">
-                Meet Our Founders
-            </h1>
-            <p style="color:white !important; font-size:17px;">
-                Built with ambition. Powered by AI.
-                Designed for students.
-            </p>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
-
-    founder1, founder2, founder3 = st.columns(3, gap="medium")
-
-    founders = [
-        (founder1, "Arjun Panchal"),
-        (founder2, "Swwara Acharya"),
-        (founder3, "Tanbi Mondal"),
-    ]
-
-    for column, name in founders:
-        with column:
-            st.markdown(
-                f"""
-                <div style="
-                    background:linear-gradient(135deg,#1E1B4B,#111827);
-                    border:1px solid #4C1D95;
-                    border-radius:16px;
-                    padding:22px 8px;
-                    text-align:center;
-                    min-height:140px;
-                ">
-                    <div style="font-size:32px;">👤</div>
-                    <h3 style="
-                        color:white !important;
-                        font-size:18px;
-                        margin:10px 0;
-                    ">{name}</h3>
-                    <p style="
-                        color:#C4B5FD !important;
-                        font-size:14px;
-                        margin:0;
-                    ">Co-Founder</p>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
-
-    st.markdown(
-        """
-        <div style="
-            text-align:center;
-            padding:28px 0 10px 0;
-            color:#FFFFFF;
-        ">
-            © 2026 StudyMate AI
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
