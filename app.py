@@ -567,16 +567,70 @@ if page == "🏠 Dashboard":
     )
 
 
+```python
 # ---------------- STUDY CHAT ----------------
 elif page == "💬 Study Chat":
     st.subheader("💬 Study Chat")
     st.write("Ask questions and learn at your own pace.")
 
+    # Chat window styling
+    st.markdown("""
+    <style>
+    [data-testid="stChatMessage"] {
+        background-color: #ffffff;
+        border: 1px solid #d5e5d8;
+        border-radius: 14px;
+        padding: 14px;
+        margin-bottom: 10px;
+    }
+
+    [data-testid="stChatMessage"] p,
+    [data-testid="stChatMessage"] li {
+        color: #111111 !important;
+    }
+
+    [data-testid="stChatInput"] {
+        background-color: #ffffff;
+        border: 2px solid #FFD700;
+        border-radius: 14px;
+    }
+
+    [data-testid="stChatInput"] textarea {
+        color: #111111 !important;
+        background-color: #ffffff !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # Welcome message
+    if not st.session_state.chat_history:
+        st.markdown("""
+        <div style="
+            background: #ffffff;
+            border: 1px solid #d5e5d8;
+            border-radius: 16px;
+            padding: 22px;
+            margin: 16px 0;
+            text-align: center;
+        ">
+            <div style="font-size: 38px;">🎓</div>
+            <h3 style="color: #14532d;">Hey there, learner!</h3>
+            <p style="color: #414b43;">
+                I'm your StudyMate AI tutor. Ask me anything about
+                your Class 10 CBSE subjects, and we'll work through it together.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # Display previous messages
     for message in st.session_state.chat_history:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    question = st.chat_input("Ask your study question...")
+    # Question input box
+    question = st.chat_input(
+        "Ask a question about Maths, Science, English..."
+    )
 
     if question:
         st.session_state.chat_history.append(
@@ -600,11 +654,13 @@ elif page == "💬 Study Chat":
                             "You are StudyMate AI, a friendly and accurate "
                             "Class 10 CBSE tutor. Answer the student's latest "
                             "question clearly, step by step when useful. "
-                            "Use simple explanations and examples."
+                            "Use simple explanations and examples. "
+                            "If a question is ambiguous, ask for clarification."
                         ),
                     )
 
                     st.markdown(answer)
+
                     st.session_state.chat_history.append(
                         {"role": "assistant", "content": answer}
                     )
@@ -618,9 +674,12 @@ elif page == "💬 Study Chat":
                         "usage limits in Google AI Studio."
                     )
 
-    if st.button("Clear Chat"):
-        st.session_state.chat_history = []
-        st.rerun()
+    # Clear conversation
+    if st.session_state.chat_history:
+        if st.button("🗑️ Clear Chat", key="clear_study_chat"):
+            st.session_state.chat_history = []
+            st.rerun()
+```
 
 
 # ---------------- SUMMARIZER ----------------
