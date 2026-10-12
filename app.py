@@ -16,7 +16,7 @@ st.set_page_config(
 
 DATA_FILE = "studymate_data.json"
 LOGO_URL = "https://treehousehighschool.com/wp-content/uploads/2025/12/imgi_4_1024.png"
-MODEL_NAME = "gemini-3.8-flash"
+MODEL_NAME = "gemini-3.5-flash-lite"
 
 
 # ---------------- LOCAL DATA ----------------
