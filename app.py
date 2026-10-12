@@ -567,7 +567,6 @@ if page == "🏠 Dashboard":
     )
 
 
-```python
 # ---------------- STUDY CHAT ----------------
 elif page == "💬 Study Chat":
     st.subheader("💬 Study Chat")
