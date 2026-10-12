@@ -678,7 +678,6 @@ elif page == "💬 Study Chat":
         if st.button("🗑️ Clear Chat", key="clear_study_chat"):
             st.session_state.chat_history = []
             st.rerun()
-```
 
 
 # ---------------- SUMMARIZER ----------------
