@@ -260,23 +260,35 @@ with st.sidebar:
 
     st.divider()
 
+    
     # Focus timer display
     st.markdown("### ⏳ Focus Mode")
 
+    # Calculate elapsed time safely
+    focus_start = st.session_state.get("focus_start_time")
+    focus_elapsed = 0
+
+    if focus_start is not None and not st.session_state.focus_paused:
+        focus_elapsed = time.time() - focus_start
+
     if st.session_state.focus_paused:
         st.info("Timer paused — enjoy your break!")
+
     elif st.session_state.focus_reminder_pending:
         st.success("Your 40-minute session is complete!")
+
     else:
         remaining = max(
             0,
             int(FOCUS_DURATION - focus_elapsed),
         )
+
         minutes, seconds = divmod(remaining, 60)
 
         st.markdown(
             f"**Time until reminder: {minutes:02d}:{seconds:02d}**"
         )
+
         st.progress(
             min(1.0, focus_elapsed / FOCUS_DURATION)
         )
