@@ -290,59 +290,32 @@ quiz_in_progress = (
     and st.session_state.quiz_result is None
 )
 
+
 if st.session_state.focus_reminder_pending and not quiz_in_progress:
 
     @st.dialog("🌱 Time for a Focus Check-in!")
     def focus_reminder():
         st.markdown(
-            """
-            <div style="background: linear-gradient(135deg, #102A22, #174B38);
-                        border: 1px solid #D8BB7A;
-                        border-radius: 16px;
-                        padding: 24px;
-                        text-align: center;">
-                <div style="font-size: 42px;">🎓</div>
-                <h2 style="color: #D8BB7A;">40 minutes. Great effort!</h2>
-                <p style="color: #E5F1EA;">
-                    You've completed a focus session.
-                </p>
-            </div>
-            """,
+            '<div style="background:linear-gradient(135deg,#102A22,#174B38);'
+            'border:1px solid #D8BB7A;border-radius:16px;padding:24px;'
+            'text-align:center;">'
+            '<div style="font-size:42px;">🎓</div>'
+            '<h2 style="color:#D8BB7A;">40 minutes. Great effort!</h2>'
+            '<p style="color:#E5F1EA;">You have completed a focus session.</p>'
+            '</div>',
             unsafe_allow_html=True,
         )
 
-        # Keep the rest of your existing focus_reminder()
-        # function below this point.
-                    Stretch, drink some water, or take a moment
-                    to recharge before your next session.
-                </p>
-                <p style="color: #D8BB7A;">
-                    STUDYMATE AI · KEEP LEARNING. KEEP GROWING.
-                </p>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.write("Take a moment to rest your eyes and stretch.")
 
-        st.write("What would you like to do next?")
-
-        if st.button(
-            "🚀 Continue studying",
-            use_container_width=True,
-            key="focus_continue",
-        ):
-            st.session_state.focus_start_time = time.time()
-            st.session_state.focus_paused = False
+        if st.button("✅ Continue studying", use_container_width=True):
             st.session_state.focus_reminder_pending = False
+            st.session_state.focus_start_time = time.time()
             st.rerun()
 
-        if st.button(
-            "☕ Take a short break",
-            use_container_width=True,
-            key="focus_take_break",
-        ):
-            st.session_state.focus_paused = True
+        if st.button("☕ Take a short break", use_container_width=True):
             st.session_state.focus_reminder_pending = False
+            st.session_state.focus_start_time = None
             st.rerun()
 
     focus_reminder()
