@@ -32,6 +32,9 @@ FOCUS_DURATION = 40 * 60  # 40 minutes, in seconds
 # =========================================================
 
 BOOK_LOGO = """
+def logo_html(css_class=""):
+    return f'<div class="{css_class}">{BOOK_LOGO}</div>'
+
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
   <defs>
     <linearGradient id="bookGradient" x1="0" y1="0" x2="1" y2="1">
