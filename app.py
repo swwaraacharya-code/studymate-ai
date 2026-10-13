@@ -37,6 +37,8 @@ if "focus_start_time" not in st.session_state:
 if "focus_remaining" not in st.session_state:
     st.session_state.focus_remaining = FOCUS_DURATION
 
+if "focus_reminder_pending" not in st.session_state:
+    st.session_state.focus_reminder_pending = False
 
 # =========================================================
 # LOGO HTML HELPER
