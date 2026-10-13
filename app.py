@@ -676,3 +676,323 @@ STUDY NOTES:
 
             save_data(data)
             st.success("Summary saved to My Library!")
+# =========================================================
+# QUIZ STUDIO
+# =========================================================
+elif page == "🧠 Quiz Studio":
+    st.subheader("🧠 Quiz Studio")
+    st.write(
+        "Create a quiz, answer the questions, and see your results."
+    )
+
+    with st.form("quiz_setup"):
+        topic = st.text_input(
+            "Quiz topic",
+            placeholder="e.g. Electricity or quadratic equations",
+        )
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            difficulty = st.selectbox(
+                "Difficulty",
+                ["Easy", "Medium", "Hard"],
+            )
+
+        with col2:
+            count = st.selectbox(
+                "Number of questions",
+                [5, 10, 15],
+            )
+
+        generate = st.form_submit_button(
+            "✨ Generate quiz",
+            use_container_width=True,
+        )
+
+    if generate:
+        if not topic.strip():
+            st.warning("Enter a topic first.")
+
+        else:
+            with st.spinner("Creating your quiz..."):
+                try:
+                    st.session_state.quiz = create_quiz(
+                        topic.strip(),
+                        difficulty,
+                        count,
+                    )
+                    st.session_state.quiz_result = None
+
+                except Exception as error:
+                    st.error(
+                        f"Quiz error: {type(error).__name__}: {error}"
+                    )
+
+    quiz = st.session_state.quiz
+
+    if quiz:
+        st.markdown(f"### 📘 {quiz['topic']}")
+
+        if st.session_state.quiz_result is None:
+            with st.form("answer_quiz"):
+                answers = []
+
+                for i, question in enumerate(quiz["questions"]):
+                    st.markdown(
+                        f"**Question {i + 1}. {question['question']}**"
+                    )
+
+                    choice = st.radio(
+                        f"Choose your answer for question {i + 1}",
+                        question["options"],
+                        index=None,
+                        key=f"quiz_answer_{i}",
+                        label_visibility="collapsed",
+                    )
+
+                    answers.append(choice)
+                    st.divider()
+
+                submitted = st.form_submit_button(
+                    "✅ Submit answers",
+                    use_container_width=True,
+                )
+
+            if submitted:
+                unanswered = [
+                    i + 1
+                    for i, answer in enumerate(answers)
+                    if answer is None
+                ]
+
+                if unanswered:
+                    st.warning(
+                        "Please answer every question. Missing: "
+                        + ", ".join(map(str, unanswered))
+                    )
+
+                else:
+                    correct = sum(
+                        answer == question["options"][question["answer"]]
+                        for question, answer in zip(
+                            quiz["questions"],
+                            answers,
+                        )
+                    )
+
+                    total = len(quiz["questions"])
+                    percentage = round(correct / total * 100)
+
+                    st.session_state.quiz_result = {
+                        "answers": answers,
+                        "correct": correct,
+                        "total": total,
+                        "percentage": percentage,
+                    }
+
+                    data = load_data()
+
+                    data["quiz_results"].append(
+                        {
+                            "topic": quiz["topic"],
+                            "correct": correct,
+                            "total": total,
+                            "percentage": percentage,
+                            "date": datetime.now().strftime(
+                                "%Y-%m-%d %H:%M"
+                            ),
+                        }
+                    )
+
+                    save_data(data)
+                    st.rerun()
+
+        result = st.session_state.quiz_result
+
+        if result:
+            st.markdown("### 🏆 Your results")
+
+            st.metric(
+                "Your score",
+                f"{result['correct']} / {result['total']}",
+                f"{result['percentage']}%",
+            )
+
+            if result["percentage"] >= 80:
+                st.success("Excellent work! Keep it up! 🎉")
+            elif result["percentage"] >= 50:
+                st.info(
+                    "Good effort! Review the explanations below."
+                )
+            else:
+                st.warning(
+                    "Keep practising. Every attempt helps you learn!"
+                )
+
+            st.markdown("### 📝 Answer review")
+
+            for i, question in enumerate(quiz["questions"]):
+                correct_answer = question["options"][question["answer"]]
+                user_answer = result["answers"][i]
+
+                if user_answer == correct_answer:
+                    st.success(f"Question {i + 1}: Correct!")
+                else:
+                    st.error(
+                        f"Question {i + 1}: Correct answer: {correct_answer}"
+                    )
+
+                explanation = question.get(
+                    "explanation",
+                    "Review this topic in your notes.",
+                )
+
+                st.write(explanation)
+
+            if st.button(
+                "🔄 Create another quiz",
+                key="another_quiz",
+            ):
+                st.session_state.quiz = None
+                st.session_state.quiz_result = None
+                st.rerun()
+
+
+# =========================================================
+# MY LIBRARY
+# =========================================================
+elif page == "📚 My Library":
+    st.subheader("📚 My Library")
+    st.write("Your saved revision summaries.")
+
+    summaries = list(reversed(load_data()["summaries"]))
+
+    if not summaries:
+        st.info(
+            "You haven't saved any summaries yet. Create one first!"
+        )
+
+    else:
+        for index, item in enumerate(summaries):
+            title = item.get("title", "Untitled summary")
+            date = item.get("date", "Date unavailable")
+            content = item.get("content", "")
+
+            with st.expander(f"📄 {title} — {date}"):
+                st.markdown(content)
+
+                st.download_button(
+                    "⬇️ Download summary",
+                    data=content,
+                    file_name=f"summary_{index + 1}.txt",
+                    mime="text/plain",
+                    key=f"download_summary_{index}",
+                )
+
+
+# =========================================================
+# MY PROGRESS
+# =========================================================
+elif page == "📊 My Progress":
+    st.subheader("📊 My Progress")
+    st.write("Review your saved quiz results and learning history.")
+
+    results = list(reversed(load_data()["quiz_results"]))
+
+    if not results:
+        st.info(
+            "Complete a quiz to start tracking your progress."
+        )
+
+    else:
+        for item in results:
+            with st.container(border=True):
+                st.markdown(
+                    f"**📘 {item.get('topic', 'Untitled quiz')}**"
+                )
+
+                st.write(
+                    f"Date: {item.get('date', 'Unknown')} | "
+                    f"Score: {item.get('correct', 0)}/"
+                    f"{item.get('total', 0)} | "
+                    f"Percentage: {item.get('percentage', 0)}%"
+                )
+
+                st.progress(
+                    max(
+                        0.0,
+                        min(
+                            1.0,
+                            item.get("percentage", 0) / 100,
+                        ),
+                    )
+                )
+
+
+# =========================================================
+# FOOTER
+# =========================================================
+st.markdown(
+    """
+    <div class="footer">
+        STUDYMATE AI · MADE FOR CURIOUS MINDS<br>
+        Keep learning. Keep growing.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+# =========================================================
+# MEET OUR FOUNDERS
+# =========================================================
+st.markdown(
+    """
+    <div style="text-align: center; padding: 20px 0 14px;">
+        <div class="section-eyebrow">THE PEOPLE BEHIND THE PROJECT</div>
+        <h2 style="margin-top: 8px;">Meet Our Founders</h2>
+        <p style="color: #A9BCB2;">
+            Built with ambition. Powered by AI. Designed for students.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+col1, col2, col3 = st.columns(3)
+
+founders = [
+    ("Arjun Panchal", "Co-Founder"),
+    ("Swwara Acharya", "Co-Founder"),
+    ("Tanbi Mondal", "Co-Founder"),
+]
+
+for col, (name, role) in zip([col1, col2, col3], founders):
+    with col:
+        st.markdown(
+            f"""
+            <div class="founder">
+                <div class="founder-avatar">✦</div>
+                <h3>{name}</h3>
+                <p>{role}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+
+st.markdown(
+    """
+    <div style="
+        text-align: center;
+        color: #82998D;
+        font-size: 12px;
+        margin-top: 24px;
+        padding-bottom: 12px;
+    ">
+        © 2026 StudyMate AI · Learn smarter, every day.
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
