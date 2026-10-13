@@ -294,20 +294,25 @@ if st.session_state.focus_reminder_pending and not quiz_in_progress:
 
     @st.dialog("🌱 Time for a Focus Check-in!")
     def focus_reminder():
-        st.markdown(  """
-            <div style="
-                background: linear-gradient(135deg, #102A22, #174B38);
-                border: 1px solid #D8BB7A;
-                border-radius: 16px;
-                padding: 24px;
-                text-align: center;
-            ">
+        st.markdown(
+            """
+            <div style="background: linear-gradient(135deg, #102A22, #174B38);
+                        border: 1px solid #D8BB7A;
+                        border-radius: 16px;
+                        padding: 24px;
+                        text-align: center;">
                 <div style="font-size: 42px;">🎓</div>
-                <h2 style="color: #D8BB7A;">
-                    40 minutes. Great effort!
-                </h2>
+                <h2 style="color: #D8BB7A;">40 minutes. Great effort!</h2>
                 <p style="color: #E5F1EA;">
                     You've completed a focus session.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        # Keep the rest of your existing focus_reminder()
+        # function below this point.
                     Stretch, drink some water, or take a moment
                     to recharge before your next session.
                 </p>
