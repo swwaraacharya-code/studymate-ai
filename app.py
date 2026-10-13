@@ -378,3 +378,301 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+# =========================================================
+# DASHBOARD
+# =========================================================
+if page == "🏠 Dashboard":
+    st.subheader("Welcome to your study space 👋")
+    st.write("What would you like to work on today?")
+
+    data = load_data()
+
+    total_quizzes = len(data["quiz_results"])
+    saved_notes = len(data["summaries"])
+
+    average = (
+        sum(
+            result.get("percentage", 0)
+            for result in data["quiz_results"]
+        ) / total_quizzes
+        if total_quizzes
+        else 0
+    )
+
+    c1, c2, c3 = st.columns(3)
+
+    with c1:
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-label">QUIZZES COMPLETED</div>
+                <div class="metric-value">{total_quizzes}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with c2:
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-label">SAVED SUMMARIES</div>
+                <div class="metric-value">{saved_notes}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with c3:
+        st.markdown(
+            f"""
+            <div class="metric-card">
+                <div class="metric-label">AVERAGE QUIZ SCORE</div>
+                <div class="metric-value">{average:.0f}%</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("### ✨ Your study tools")
+
+    a, b, c = st.columns(3)
+
+    with a:
+        with st.container(border=True, key="study_chat_card"):
+            st.markdown("### 💬")
+            st.markdown("**Study Chat**")
+            st.write(
+                "Understand difficult concepts with your AI tutor."
+            )
+            st.button(
+                "Open Study Chat",
+                use_container_width=True,
+                on_click=go_to_page,
+                args=("💬 Study Chat",),
+                key="open_study_chat",
+            )
+
+    with b:
+        with st.container(border=True, key="summarizer_card"):
+            st.markdown("### 📝")
+            st.markdown("**Smart Summarizer**")
+            st.write(
+                "Turn long notes into organised revision points."
+            )
+            st.button(
+                "Open Summarizer",
+                use_container_width=True,
+                on_click=go_to_page,
+                args=("📝 Summarizer",),
+                key="open_summarizer",
+            )
+
+    with c:
+        with st.container(border=True, key="quiz_studio_card"):
+            st.markdown("### 🧠")
+            st.markdown("**Quiz Studio**")
+            st.write(
+                "Generate questions, test your knowledge, and check your score."
+            )
+            st.button(
+                "Open Quiz Studio",
+                use_container_width=True,
+                on_click=go_to_page,
+                args=("🧠 Quiz Studio",),
+                key="open_quiz_studio",
+            )
+
+    st.markdown("### 🌱 Study tip")
+
+    st.info(
+        "Study one topic, make a short summary, and test your understanding "
+        "with a quiz. Small, consistent steps can make revision easier."
+    )
+
+
+# =========================================================
+# STUDY CHAT
+# =========================================================
+elif page == "💬 Study Chat":
+    st.subheader("💬 Study Chat")
+    st.write("Ask questions and learn at your own pace.")
+
+    if not st.session_state.chat_history:
+        st.markdown(
+            """
+            <div style="
+                background: linear-gradient(
+                    135deg,
+                    rgba(21, 43, 35, .98),
+                    rgba(12, 28, 22, .98)
+                );
+                border: 1px solid rgba(54, 220, 160, .30);
+                border-radius: 16px;
+                padding: 22px;
+                margin: 16px 0;
+                text-align: center;
+            ">
+                <div style="font-size: 38px;">📚</div>
+                <h3 style="color: #36DCA0;">
+                    Hey there, learner!
+                </h3>
+                <p style="color: #C0D1C8;">
+                    I'm your StudyMate AI tutor. Ask me anything about
+                    your Class 10 CBSE subjects, and we'll work through
+                    it together.
+                </p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    # Display previous chat messages.
+    for message in st.session_state.chat_history:
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
+
+    # Keep the question input box.
+    question = st.chat_input(
+        "Ask a question about Maths, Science, English..."
+    )
+
+    if question:
+        st.session_state.chat_history.append(
+            {
+                "role": "user",
+                "content": question,
+            }
+        )
+
+        with st.chat_message("user"):
+            st.markdown(question)
+
+        with st.chat_message("assistant"):
+            with st.spinner("Your AI tutor is thinking..."):
+                try:
+                    history_text = "\n\n".join(
+                        f'{message["role"]}: {message["content"]}'
+                        for message in st.session_state.chat_history[-12:]
+                    )
+
+                    answer = ask_ai(
+                        history_text,
+                        system_prompt=(
+                            "You are StudyMate AI, a friendly and accurate "
+                            "Class 10 CBSE tutor. Answer the student's latest "
+                            "question clearly. Explain step by step when useful. "
+                            "Use simple explanations and examples. For maths, "
+                            "show the working. If a question is ambiguous, "
+                            "ask for clarification. Do not invent facts."
+                        ),
+                    )
+
+                    st.markdown(answer)
+
+                    st.session_state.chat_history.append(
+                        {
+                            "role": "assistant",
+                            "content": answer,
+                        }
+                    )
+
+                except Exception as error:
+                    st.error(
+                        f"Study Chat error: {type(error).__name__}: {error}"
+                    )
+                    st.info(
+                        "Check your Gemini API key, model access, and API "
+                        "usage limits in Google AI Studio."
+                    )
+
+    if st.session_state.chat_history:
+        if st.button(
+            "🗑️ Clear Chat",
+            key="clear_study_chat",
+        ):
+            st.session_state.chat_history = []
+            st.rerun()
+
+
+# =========================================================
+# SMART SUMMARIZER
+# =========================================================
+elif page == "📝 Summarizer":
+    st.subheader("📝 Smart Summarizer")
+    st.write("Turn your study material into clear revision notes.")
+
+    notes = st.text_area(
+        "Paste your notes",
+        height=220,
+        placeholder="Paste your textbook notes here...",
+        key="summary_notes",
+    )
+
+    style = st.selectbox(
+        "Summary style",
+        [
+            "Key points",
+            "Short revision notes",
+            "Important definitions",
+            "Exam-focused summary",
+        ],
+    )
+
+    if st.button(
+        "✨ Summarize notes",
+        use_container_width=True,
+        key="summarize_notes_button",
+    ):
+        if not notes.strip():
+            st.warning("Paste your notes first.")
+
+        else:
+            with st.spinner("Organising your notes..."):
+                try:
+                    summary = ask_ai(
+                        f"""
+Create {style.lower()} for a Class 10 CBSE student.
+
+Instructions:
+- Use clear headings and bullet points.
+- Preserve important facts and definitions.
+- Do not invent information not supported by the notes.
+- Keep the summary useful for revision.
+
+STUDY NOTES:
+{notes}
+""",
+                    )
+
+                    st.session_state.latest_summary = summary
+
+                except Exception as error:
+                    st.error(
+                        f"Summarizer error: {type(error).__name__}: {error}"
+                    )
+
+    if st.session_state.latest_summary:
+        st.markdown("### 📖 Your revision notes")
+        st.markdown(st.session_state.latest_summary)
+
+        if st.button(
+            "💾 Save summary to My Library",
+            key="save_summary",
+        ):
+            data = load_data()
+
+            data["summaries"].append(
+                {
+                    "title": (
+                        notes.strip().splitlines()[0][:80]
+                        if notes.strip()
+                        else "Untitled summary"
+                    ),
+                    "content": st.session_state.latest_summary,
+                    "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                }
+            )
+
+            save_data(data)
+            st.success("Summary saved to My Library!")
