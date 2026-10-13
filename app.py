@@ -215,6 +215,8 @@ def go_to_page(page_name):
 # SIDEBAR
 # =========================================================
 with st.sidebar:
+    def logo_html(css_class=""):
+    return f'<div class="{css_class}">{BOOK_LOGO}</div>'
     st.markdown(
         f"""
         <div class="sidebar-brand">
