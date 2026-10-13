@@ -275,6 +275,26 @@ st.markdown(
     hr {
         border-color: rgba(216,187,122,.2);
     }
+    /* Keep typed questions readable in white chat/input boxes */
+    .stApp input,
+    .stApp textarea,
+    .stApp [data-baseweb="input"] input,
+    .stApp [data-baseweb="textarea"] textarea,
+    .stApp [data-testid="stChatInput"] textarea,
+    .stApp [data-testid="stChatInput"] input {
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important;
+        caret-color: #000000 !important;
+    }
+
+    .stApp input::placeholder,
+    .stApp textarea::placeholder,
+    .stApp [data-testid="stChatInput"] textarea::placeholder {
+        color: #555555 !important;
+        -webkit-text-fill-color: #555555 !important;
+        opacity: 1 !important;
+    }
+
     </style>
     """,
     unsafe_allow_html=True,
