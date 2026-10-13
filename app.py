@@ -348,8 +348,9 @@ def save_data(data):
 # =========================================================
 # GEMINI AI
 # =========================================================
+@st.cache_resource
 def get_gemini_client():
-    """Create the Gemini client using Streamlit Secrets."""
+    """Create one reusable Gemini client for this Streamlit app process."""
     try:
         api_key = st.secrets.get("GEMINI_API_KEY", "")
     except Exception:
@@ -361,6 +362,8 @@ def get_gemini_client():
             "go to Secrets, and configure your Gemini API key."
         )
 
+    # Streamlit reruns this script after interactions. Cache the client so
+    # it is not repeatedly created and garbage-collected between reruns.
     return genai.Client(api_key=str(api_key).strip())
 
 
@@ -373,7 +376,11 @@ def ask_ai(prompt, system_prompt=None):
             "show working for mathematics, and admit uncertainty when needed."
         )
 
-    response = get_gemini_client().models.generate_content(
+    # Keep the client in a named variable while the request is running.
+    # Calling get_gemini_client().models directly can let the temporary
+    # client be cleaned up before the HTTP request finishes.
+    client = get_gemini_client()
+    response = client.models.generate_content(
         model=MODEL_NAME,
         contents=prompt,
         config={"system_instruction": system_prompt},
@@ -419,7 +426,9 @@ Rules:
 - Do not include Markdown fences or text outside the JSON.
 """
 
-    response = get_gemini_client().models.generate_content(
+    # Keep the client alive for the entire quiz-generation request.
+    client = get_gemini_client()
+    response = client.models.generate_content(
         model=MODEL_NAME,
         contents=prompt,
         config={
