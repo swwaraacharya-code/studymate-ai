@@ -25,6 +25,17 @@ MODEL_NAME = "gemini-2.5-flash"
 
 FOCUS_DURATION = 40 * 60  # 40 minutes, in seconds
 
+# =========================================================
+# SESSION STATE INITIALIZATION
+# =========================================================
+if "focus_paused" not in st.session_state:
+    st.session_state.focus_paused = False
+
+if "focus_start_time" not in st.session_state:
+    st.session_state.focus_start_time = None
+
+if "focus_remaining" not in st.session_state:
+    st.session_state.focus_remaining = FOCUS_DURATION
 
 
 # =========================================================
