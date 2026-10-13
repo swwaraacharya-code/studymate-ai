@@ -1,3 +1,4 @@
+
 import json
 import os
 import time
@@ -19,36 +20,37 @@ st.set_page_config(
 )
 
 DATA_FILE = "studymate_data.json"
-
-# Use a model available to your Gemini API key.
 MODEL_NAME = "gemini-2.5-flash"
+FOCUS_DURATION = 40 * 60
 
-FOCUS_DURATION = 40 * 60  # 40 minutes, in seconds
-
-# =========================================================
-# SESSION STATE INITIALIZATION
-# =========================================================
-if "focus_paused" not in st.session_state:
-    st.session_state.focus_paused = False
-
-if "focus_start_time" not in st.session_state:
-    st.session_state.focus_start_time = None
-
-if "focus_remaining" not in st.session_state:
-    st.session_state.focus_remaining = FOCUS_DURATION
-
-if "focus_reminder_pending" not in st.session_state:
-    st.session_state.focus_reminder_pending = False
 
 # =========================================================
-# LOGO HTML HELPER
+# SESSION STATE
 # =========================================================
+DEFAULT_STATE = {
+    "page": "🏠 Dashboard",
+    "chat_history": [],
+    "latest_summary": "",
+    "summary_notes": "",
+    "quiz": None,
+    "quiz_result": None,
+    "focus_paused": True,
+    "focus_start_time": None,
+    "focus_remaining": FOCUS_DURATION,
+    "focus_reminder_pending": False,
+}
 
+for key, value in DEFAULT_STATE.items():
+    if key not in st.session_state:
+        st.session_state[key] = value
+
+
+# =========================================================
+# BOOK LOGO
+# =========================================================
 BOOK_LOGO = """
-def logo_html(css_class=""):
-    return f'<div class="{css_class}">{BOOK_LOGO}</div>'
-
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"
+     role="img" aria-label="StudyMate AI book logo">
   <defs>
     <linearGradient id="bookGradient" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#D8BB7A"/>
@@ -66,10 +68,262 @@ def logo_html(css_class=""):
     <path d="M74 51 L88 51"/>
     <path d="M74 61 L88 61"/>
   </g>
-  <path d="M60 15 L63 23 L71 26 L63 29 L60 37 L57 29 L49 26 L57 23 Z"
+  <path d="M60 15 L63 23 L71 26 L63 29 L60 37
+           L57 29 L49 26 L57 23 Z"
         fill="#D8BB7A"/>
 </svg>
 """
+
+
+def logo_html(css_class=""):
+    return f'<div class="{css_class}">{BOOK_LOGO}</div>'
+
+
+# =========================================================
+# GREEN AND GOLD DESIGN
+# =========================================================
+st.markdown(
+    """
+    <style>
+    :root {
+        --green: #45C995;
+        --gold: #D8BB7A;
+        --text: #E5F1EA;
+        --muted: #A9BCB2;
+    }
+
+    .stApp {
+        background:
+            radial-gradient(ellipse at top left,
+                rgba(69,201,149,.09), transparent 40%),
+            linear-gradient(180deg, #09140F 0%, #0C1912 100%);
+        color: var(--text);
+    }
+
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #10251F, #09140F);
+        border-right: 1px solid rgba(216,187,122,.22);
+    }
+
+    h1, h2, h3 {
+        color: var(--text);
+        letter-spacing: -.4px;
+    }
+
+    p, label, .stMarkdown {
+        color: var(--text);
+    }
+
+    .sidebar-brand {
+        text-align: center;
+        padding: 12px 4px 20px;
+    }
+
+    .sidebar-brand h2 {
+        color: var(--text);
+        margin: 10px 0 2px;
+        font-size: 25px;
+    }
+
+    .sidebar-brand p {
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 2px;
+    }
+
+    .sidebar-logo svg {
+        width: 94px;
+        height: 94px;
+    }
+
+    .hero {
+        padding: 36px 24px;
+        margin: 4px 0 26px;
+        text-align: center;
+        border: 1px solid rgba(216,187,122,.28);
+        border-radius: 24px;
+        background:
+            radial-gradient(circle at top,
+                rgba(69,201,149,.14), transparent 65%),
+            linear-gradient(135deg, #102A22, #0C1912);
+        box-shadow: 0 12px 40px rgba(0,0,0,.15);
+    }
+
+    .hero svg {
+        width: 106px;
+        height: 106px;
+        margin-bottom: 12px;
+    }
+
+    .hero .eyebrow, .section-eyebrow {
+        color: var(--gold);
+        font-size: 11px;
+        letter-spacing: 2.5px;
+        font-weight: 700;
+    }
+
+    .hero h1 {
+        font-size: clamp(32px, 5vw, 54px);
+        margin: 8px 0;
+        color: var(--text);
+    }
+
+    .hero h2 {
+        color: var(--green);
+        font-size: clamp(20px, 3vw, 28px);
+        margin: 0 0 14px;
+    }
+
+    .hero p {
+        color: var(--muted);
+        max-width: 680px;
+        margin: 0 auto;
+        line-height: 1.8;
+    }
+
+    .metric-card {
+        background: linear-gradient(135deg, #16352A, #10251F);
+        border: 1px solid rgba(69,201,149,.24);
+        border-radius: 18px;
+        padding: 22px 16px;
+        min-height: 116px;
+    }
+
+    .metric-label {
+        font-size: 10px;
+        color: var(--muted);
+        letter-spacing: 1.5px;
+        font-weight: 700;
+    }
+
+    .metric-value {
+        font-size: 34px;
+        font-weight: 750;
+        color: var(--gold);
+        margin-top: 12px;
+    }
+
+    .founder {
+        background: linear-gradient(145deg, #16352A, #10251F);
+        border: 1px solid rgba(216,187,122,.24);
+        border-radius: 18px;
+        padding: 24px 12px;
+        text-align: center;
+        min-height: 150px;
+    }
+
+    .founder-avatar {
+        display: inline-flex;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        align-items: center;
+        justify-content: center;
+        background: #102A22;
+        color: var(--gold);
+        border: 1px solid rgba(216,187,122,.4);
+        font-size: 22px;
+    }
+
+    .founder h3 {
+        font-size: 17px;
+        margin: 12px 0 4px;
+    }
+
+    .founder p {
+        color: var(--green);
+        font-size: 12px;
+    }
+
+    .footer {
+        text-align: center;
+        color: #A9BCB2;
+        font-size: 12px;
+        padding: 22px 0;
+        line-height: 1.8;
+    }
+
+    div.stButton > button,
+    div.stFormSubmitButton > button {
+        border-radius: 12px;
+        border: 1px solid rgba(69,201,149,.35);
+        background: linear-gradient(135deg, #45C995, #21875F);
+        color: #07140E;
+        font-weight: 700;
+        transition: .2s ease;
+    }
+
+    div.stButton > button:hover,
+    div.stFormSubmitButton > button:hover {
+        border-color: var(--gold);
+        color: #07140E;
+        filter: brightness(1.08);
+    }
+
+    div[data-testid="stMetric"] {
+        background: #10251F;
+        padding: 14px;
+        border-radius: 14px;
+        border: 1px solid rgba(69,201,149,.2);
+    }
+
+    div[data-testid="stExpander"] {
+        border-color: rgba(69,201,149,.25);
+        border-radius: 12px;
+    }
+
+    hr {
+        border-color: rgba(216,187,122,.2);
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+
+# =========================================================
+# DATA STORAGE
+# =========================================================
+def empty_data():
+    return {
+        "summaries": [],
+        "quiz_results": [],
+    }
+
+
+def load_data():
+    """Load saved summaries and quiz results."""
+    if not os.path.exists(DATA_FILE):
+        return empty_data()
+
+    try:
+        with open(DATA_FILE, "r", encoding="utf-8") as file:
+            data = json.load(file)
+
+        if not isinstance(data, dict):
+            return empty_data()
+
+        if not isinstance(data.get("summaries"), list):
+            data["summaries"] = []
+
+        if not isinstance(data.get("quiz_results"), list):
+            data["quiz_results"] = []
+
+        return data
+
+    except (OSError, json.JSONDecodeError):
+        return empty_data()
+
+
+def save_data(data):
+    """Save application data to JSON."""
+    temporary_file = DATA_FILE + ".tmp"
+
+    with open(temporary_file, "w", encoding="utf-8") as file:
+        json.dump(data, file, ensure_ascii=False, indent=2)
+
+    os.replace(temporary_file, DATA_FILE)
+
 
 # =========================================================
 # GEMINI AI
@@ -83,15 +337,15 @@ def get_gemini_client():
 
     if not api_key or not str(api_key).strip():
         raise RuntimeError(
-            "GEMINI_API_KEY is missing. Open your Streamlit app settings, "
-            "go to Secrets, and make sure your Gemini API key is configured."
+            "GEMINI_API_KEY is missing. Open Streamlit Cloud settings, "
+            "go to Secrets, and configure your Gemini API key."
         )
 
-    return genai.Client(api_key=api_key)
+    return genai.Client(api_key=str(api_key).strip())
 
 
 def ask_ai(prompt, system_prompt=None):
-    """Send a prompt to Gemini and return the text response."""
+    """Send a prompt to Gemini and return its answer."""
     if system_prompt is None:
         system_prompt = (
             "You are StudyMate AI, a helpful tutor for Class 10 CBSE students. "
@@ -99,22 +353,16 @@ def ask_ai(prompt, system_prompt=None):
             "show working for mathematics, and admit uncertainty when needed."
         )
 
-    client = get_gemini_client()
-
-    response = client.models.generate_content(
+    response = get_gemini_client().models.generate_content(
         model=MODEL_NAME,
         contents=prompt,
-        config={
-            "system_instruction": system_prompt,
-        },
+        config={"system_instruction": system_prompt},
     )
 
     answer = response.text
 
     if not answer or not answer.strip():
-        raise RuntimeError(
-            "Gemini returned an empty response. Please try again."
-        )
+        raise RuntimeError("Gemini returned an empty response. Please try again.")
 
     return answer.strip()
 
@@ -135,12 +383,7 @@ Return only valid JSON in this format:
   "questions": [
     {{
       "question": "Question text",
-      "options": [
-        "Option A",
-        "Option B",
-        "Option C",
-        "Option D"
-      ],
+      "options": ["Option A", "Option B", "Option C", "Option D"],
       "answer": 0,
       "explanation": "Brief explanation"
     }}
@@ -156,9 +399,7 @@ Rules:
 - Do not include Markdown fences or text outside the JSON.
 """
 
-    client = get_gemini_client()
-
-    response = client.models.generate_content(
+    response = get_gemini_client().models.generate_content(
         model=MODEL_NAME,
         contents=prompt,
         config={
@@ -184,10 +425,10 @@ Rules:
 
     questions = quiz_data.get("questions")
 
-    if not isinstance(questions, list) or len(questions) < 1:
-        raise ValueError("The generated quiz format was unexpected.")
-
-    questions = questions[:count]
+    if not isinstance(questions, list) or len(questions) != count:
+        raise ValueError(
+            f"The quiz must contain exactly {count} questions. Please retry."
+        )
 
     for question in questions:
         if not isinstance(question, dict):
@@ -209,12 +450,12 @@ Rules:
                 "A generated quiz question has an invalid format."
             )
 
-        question.setdefault("explanation", "Review this concept in your notes.")
+        question.setdefault(
+            "explanation",
+            "Review this concept in your notes.",
+        )
 
-    return {
-        "topic": topic,
-        "questions": questions,
-    }
+    return {"topic": topic, "questions": questions}
 
 
 # =========================================================
@@ -225,11 +466,62 @@ def go_to_page(page_name):
 
 
 # =========================================================
+# FOCUS TIMER FUNCTIONS
+# =========================================================
+def focus_seconds_remaining():
+    """Calculate the current timer value."""
+    if st.session_state.focus_paused:
+        return max(0, int(st.session_state.focus_remaining))
+
+    started = st.session_state.focus_start_time
+
+    if started is None:
+        return max(0, int(st.session_state.focus_remaining))
+
+    elapsed = time.time() - started
+    return max(0, int(st.session_state.focus_remaining - elapsed))
+
+
+def start_focus():
+    st.session_state.focus_remaining = FOCUS_DURATION
+    st.session_state.focus_start_time = time.time()
+    st.session_state.focus_paused = False
+    st.session_state.focus_reminder_pending = False
+
+
+def pause_focus():
+    remaining = focus_seconds_remaining()
+    st.session_state.focus_remaining = remaining
+    st.session_state.focus_start_time = None
+    st.session_state.focus_paused = True
+
+
+def resume_focus():
+    st.session_state.focus_start_time = time.time()
+    st.session_state.focus_paused = False
+
+
+def finish_focus_if_needed():
+    if (
+        not st.session_state.focus_paused
+        and focus_seconds_remaining() <= 0
+    ):
+        st.session_state.focus_remaining = 0
+        st.session_state.focus_start_time = None
+        st.session_state.focus_paused = True
+        st.session_state.focus_reminder_pending = True
+
+
+finish_focus_if_needed()
+
+if not st.session_state.focus_paused:
+    st_autorefresh(interval=1000, key="focus_timer_refresh")
+
+
+# =========================================================
 # SIDEBAR
 # =========================================================
 with st.sidebar:
-    def logo_html(css_class=""):
-        return f'<div class="{css_class}">{BOOK_LOGO}</div>'
     st.markdown(
         f"""
         <div class="sidebar-brand">
@@ -259,42 +551,64 @@ with st.sidebar:
     )
 
     st.divider()
-
-    
-    # Focus timer display
     st.markdown("### ⏳ Focus Mode")
 
-    # Calculate elapsed time safely
-    focus_start = st.session_state.get("focus_start_time")
-    focus_elapsed = 0
+    remaining = focus_seconds_remaining()
+    minutes, seconds = divmod(remaining, 60)
 
-    if focus_start is not None and not st.session_state.focus_paused:
-        focus_elapsed = time.time() - focus_start
-
-    if st.session_state.focus_paused:
-        st.info("Timer paused — enjoy your break!")
-
-    elif st.session_state.focus_reminder_pending:
+    if st.session_state.focus_reminder_pending:
         st.success("Your 40-minute session is complete!")
 
+    elif st.session_state.focus_paused:
+        st.info("Timer paused.")
+
     else:
-        remaining = max(
-            0,
-            int(FOCUS_DURATION - focus_elapsed),
-        )
-
-        minutes, seconds = divmod(remaining, 60)
-
         st.markdown(
-            f"**Time until reminder: {minutes:02d}:{seconds:02d}**"
+            f"**Time remaining: {minutes:02d}:{seconds:02d}**"
+        )
+        st.progress(
+            max(
+                0.0,
+                min(1.0, remaining / FOCUS_DURATION),
+            )
         )
 
-        st.progress(
-            min(1.0, focus_elapsed / FOCUS_DURATION)
-        )
+    if st.session_state.focus_paused:
+        if st.session_state.focus_remaining == FOCUS_DURATION:
+            if st.button(
+                "▶️ Start 40-minute session",
+                use_container_width=True,
+                key="start_focus",
+            ):
+                start_focus()
+                st.rerun()
+        else:
+            if st.button(
+                "▶️ Resume focus session",
+                use_container_width=True,
+                key="resume_focus",
+            ):
+                resume_focus()
+                st.rerun()
+
+            if st.button(
+                "🔄 Restart timer",
+                use_container_width=True,
+                key="restart_focus",
+            ):
+                start_focus()
+                st.rerun()
+
+    else:
+        if st.button(
+            "⏸️ Pause timer",
+            use_container_width=True,
+            key="pause_focus",
+        ):
+            pause_focus()
+            st.rerun()
 
     st.divider()
-
     st.caption("✦ Powered by Gemini AI")
     st.caption("Built for curious minds.")
 
@@ -303,28 +617,33 @@ page = st.session_state.page
 
 
 # =========================================================
-# 40-MINUTE FOCUS REMINDER POPUP
+# FOCUS REMINDER
 # =========================================================
-# Do not interrupt a student while they are answering an active quiz.
 quiz_in_progress = (
     page == "🧠 Quiz Studio"
     and st.session_state.quiz is not None
     and st.session_state.quiz_result is None
 )
 
-
 if st.session_state.focus_reminder_pending and not quiz_in_progress:
 
     @st.dialog("🌱 Time for a Focus Check-in!")
     def focus_reminder():
         st.markdown(
-            '<div style="background:linear-gradient(135deg,#102A22,#174B38);'
-            'border:1px solid #D8BB7A;border-radius:16px;padding:24px;'
-            'text-align:center;">'
-            '<div style="font-size:42px;">🎓</div>'
-            '<h2 style="color:#D8BB7A;">40 minutes. Great effort!</h2>'
-            '<p style="color:#E5F1EA;">You have completed a focus session.</p>'
-            '</div>',
+            """
+            <div style="
+                background:linear-gradient(135deg,#102A22,#174B38);
+                border:1px solid #D8BB7A;
+                border-radius:16px;
+                padding:24px;
+                text-align:center;">
+                <div style="font-size:42px;">🎓</div>
+                <h2 style="color:#D8BB7A;">40 minutes. Great effort!</h2>
+                <p style="color:#E5F1EA;">
+                    You have completed a focus session.
+                </p>
+            </div>
+            """,
             unsafe_allow_html=True,
         )
 
@@ -332,31 +651,19 @@ if st.session_state.focus_reminder_pending and not quiz_in_progress:
 
         if st.button("✅ Continue studying", use_container_width=True):
             st.session_state.focus_reminder_pending = False
+            st.session_state.focus_remaining = FOCUS_DURATION
             st.session_state.focus_start_time = time.time()
+            st.session_state.focus_paused = False
             st.rerun()
 
         if st.button("☕ Take a short break", use_container_width=True):
             st.session_state.focus_reminder_pending = False
+            st.session_state.focus_remaining = FOCUS_DURATION
             st.session_state.focus_start_time = None
+            st.session_state.focus_paused = True
             st.rerun()
 
     focus_reminder()
-
-
-# =========================================================
-# RESUME FOCUS AFTER A BREAK
-# =========================================================
-if st.session_state.focus_paused:
-    with st.sidebar:
-        if st.button(
-            "▶️ Resume my focus session",
-            use_container_width=True,
-            key="resume_focus_session",
-        ):
-            st.session_state.focus_paused = False
-            st.session_state.focus_start_time = time.time()
-            st.session_state.focus_reminder_pending = False
-            st.rerun()
 
 
 # =========================================================
@@ -377,6 +684,8 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
+
+
 # =========================================================
 # DASHBOARD
 # =========================================================
@@ -385,7 +694,6 @@ if page == "🏠 Dashboard":
     st.write("What would you like to work on today?")
 
     data = load_data()
-
     total_quizzes = len(data["quiz_results"])
     saved_notes = len(data["summaries"])
 
@@ -438,12 +746,10 @@ if page == "🏠 Dashboard":
     a, b, c = st.columns(3)
 
     with a:
-        with st.container(border=True, key="study_chat_card"):
+        with st.container(border=True):
             st.markdown("### 💬")
             st.markdown("**Study Chat**")
-            st.write(
-                "Understand difficult concepts with your AI tutor."
-            )
+            st.write("Understand difficult concepts with your AI tutor.")
             st.button(
                 "Open Study Chat",
                 use_container_width=True,
@@ -453,12 +759,10 @@ if page == "🏠 Dashboard":
             )
 
     with b:
-        with st.container(border=True, key="summarizer_card"):
+        with st.container(border=True):
             st.markdown("### 📝")
             st.markdown("**Smart Summarizer**")
-            st.write(
-                "Turn long notes into organised revision points."
-            )
+            st.write("Turn long notes into organised revision points.")
             st.button(
                 "Open Summarizer",
                 use_container_width=True,
@@ -468,12 +772,10 @@ if page == "🏠 Dashboard":
             )
 
     with c:
-        with st.container(border=True, key="quiz_studio_card"):
+        with st.container(border=True):
             st.markdown("### 🧠")
             st.markdown("**Quiz Studio**")
-            st.write(
-                "Generate questions, test your knowledge, and check your score."
-            )
+            st.write("Generate questions, test your knowledge, and check your score.")
             st.button(
                 "Open Quiz Studio",
                 use_container_width=True,
@@ -483,7 +785,6 @@ if page == "🏠 Dashboard":
             )
 
     st.markdown("### 🌱 Study tip")
-
     st.info(
         "Study one topic, make a short summary, and test your understanding "
         "with a quiz. Small, consistent steps can make revision easier."
@@ -501,22 +802,15 @@ elif page == "💬 Study Chat":
         st.markdown(
             """
             <div style="
-                background: linear-gradient(
-                    135deg,
-                    rgba(21, 43, 35, .98),
-                    rgba(12, 28, 22, .98)
-                );
-                border: 1px solid rgba(54, 220, 160, .30);
-                border-radius: 16px;
-                padding: 22px;
-                margin: 16px 0;
-                text-align: center;
-            ">
-                <div style="font-size: 38px;">📚</div>
-                <h3 style="color: #36DCA0;">
-                    Hey there, learner!
-                </h3>
-                <p style="color: #C0D1C8;">
+                background:linear-gradient(135deg,#152B23,#0C1C16);
+                border:1px solid rgba(54,220,160,.30);
+                border-radius:16px;
+                padding:22px;
+                margin:16px 0;
+                text-align:center;">
+                <div style="font-size:38px;">📚</div>
+                <h3 style="color:#36DCA0;">Hey there, learner!</h3>
+                <p style="color:#C0D1C8;">
                     I'm your StudyMate AI tutor. Ask me anything about
                     your Class 10 CBSE subjects, and we'll work through
                     it together.
@@ -526,22 +820,17 @@ elif page == "💬 Study Chat":
             unsafe_allow_html=True,
         )
 
-    # Display previous chat messages.
     for message in st.session_state.chat_history:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # Keep the question input box.
     question = st.chat_input(
         "Ask a question about Maths, Science, English..."
     )
 
     if question:
         st.session_state.chat_history.append(
-            {
-                "role": "user",
-                "content": question,
-            }
+            {"role": "user", "content": question}
         )
 
         with st.chat_message("user"):
@@ -568,12 +857,8 @@ elif page == "💬 Study Chat":
                     )
 
                     st.markdown(answer)
-
                     st.session_state.chat_history.append(
-                        {
-                            "role": "assistant",
-                            "content": answer,
-                        }
+                        {"role": "assistant", "content": answer}
                     )
 
                 except Exception as error:
@@ -586,10 +871,7 @@ elif page == "💬 Study Chat":
                     )
 
     if st.session_state.chat_history:
-        if st.button(
-            "🗑️ Clear Chat",
-            key="clear_study_chat",
-        ):
+        if st.button("🗑️ Clear Chat", key="clear_study_chat"):
             st.session_state.chat_history = []
             st.rerun()
 
@@ -641,10 +923,10 @@ Instructions:
 
 STUDY NOTES:
 {notes}
-""",
+"""
                     )
-
                     st.session_state.latest_summary = summary
+                    st.session_state.summary_notes = notes
 
                 except Exception as error:
                     st.error(
@@ -655,17 +937,14 @@ STUDY NOTES:
         st.markdown("### 📖 Your revision notes")
         st.markdown(st.session_state.latest_summary)
 
-        if st.button(
-            "💾 Save summary to My Library",
-            key="save_summary",
-        ):
+        if st.button("💾 Save summary to My Library", key="save_summary"):
             data = load_data()
 
             data["summaries"].append(
                 {
                     "title": (
-                        notes.strip().splitlines()[0][:80]
-                        if notes.strip()
+                        st.session_state.summary_notes.strip().splitlines()[0][:80]
+                        if st.session_state.summary_notes.strip()
                         else "Untitled summary"
                     ),
                     "content": st.session_state.latest_summary,
@@ -673,16 +952,19 @@ STUDY NOTES:
                 }
             )
 
-            save_data(data)
-            st.success("Summary saved to My Library!")
+            try:
+                save_data(data)
+                st.success("Summary saved to My Library!")
+            except OSError as error:
+                st.error(f"Could not save the summary: {error}")
+
+
 # =========================================================
 # QUIZ STUDIO
 # =========================================================
 elif page == "🧠 Quiz Studio":
     st.subheader("🧠 Quiz Studio")
-    st.write(
-        "Create a quiz, answer the questions, and see your results."
-    )
+    st.write("Create a quiz, answer the questions, and see your results.")
 
     with st.form("quiz_setup"):
         topic = st.text_input(
@@ -791,20 +1073,21 @@ elif page == "🧠 Quiz Studio":
                     }
 
                     data = load_data()
-
                     data["quiz_results"].append(
                         {
                             "topic": quiz["topic"],
                             "correct": correct,
                             "total": total,
                             "percentage": percentage,
-                            "date": datetime.now().strftime(
-                                "%Y-%m-%d %H:%M"
-                            ),
+                            "date": datetime.now().strftime("%Y-%m-%d %H:%M"),
                         }
                     )
 
-                    save_data(data)
+                    try:
+                        save_data(data)
+                    except OSError as error:
+                        st.error(f"Could not save quiz results: {error}")
+
                     st.rerun()
 
         result = st.session_state.quiz_result
@@ -821,13 +1104,9 @@ elif page == "🧠 Quiz Studio":
             if result["percentage"] >= 80:
                 st.success("Excellent work! Keep it up! 🎉")
             elif result["percentage"] >= 50:
-                st.info(
-                    "Good effort! Review the explanations below."
-                )
+                st.info("Good effort! Review the explanations below.")
             else:
-                st.warning(
-                    "Keep practising. Every attempt helps you learn!"
-                )
+                st.warning("Keep practising. Every attempt helps you learn!")
 
             st.markdown("### 📝 Answer review")
 
@@ -842,17 +1121,14 @@ elif page == "🧠 Quiz Studio":
                         f"Question {i + 1}: Correct answer: {correct_answer}"
                     )
 
-                explanation = question.get(
-                    "explanation",
-                    "Review this topic in your notes.",
+                st.write(
+                    question.get(
+                        "explanation",
+                        "Review this topic in your notes.",
+                    )
                 )
 
-                st.write(explanation)
-
-            if st.button(
-                "🔄 Create another quiz",
-                key="another_quiz",
-            ):
+            if st.button("🔄 Create another quiz", key="another_quiz"):
                 st.session_state.quiz = None
                 st.session_state.quiz_result = None
                 st.rerun()
@@ -868,9 +1144,7 @@ elif page == "📚 My Library":
     summaries = list(reversed(load_data()["summaries"]))
 
     if not summaries:
-        st.info(
-            "You haven't saved any summaries yet. Create one first!"
-        )
+        st.info("You haven't saved any summaries yet. Create one first!")
 
     else:
         for index, item in enumerate(summaries):
@@ -900,11 +1174,25 @@ elif page == "📊 My Progress":
     results = list(reversed(load_data()["quiz_results"]))
 
     if not results:
-        st.info(
-            "Complete a quiz to start tracking your progress."
-        )
+        st.info("Complete a quiz to start tracking your progress.")
 
     else:
+        scores = [
+            result.get("percentage", 0)
+            for result in results
+        ]
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.metric("Quizzes completed", len(results))
+
+        with col2:
+            st.metric(
+                "Average score",
+                f"{sum(scores) / len(scores):.0f}%",
+            )
+
         for item in results:
             with st.container(border=True):
                 st.markdown(
@@ -948,10 +1236,10 @@ st.markdown(
 # =========================================================
 st.markdown(
     """
-    <div style="text-align: center; padding: 20px 0 14px;">
+    <div style="text-align:center;padding:20px 0 14px;">
         <div class="section-eyebrow">THE PEOPLE BEHIND THE PROJECT</div>
-        <h2 style="margin-top: 8px;">Meet Our Founders</h2>
-        <p style="color: #A9BCB2;">
+        <h2 style="margin-top:8px;">Meet Our Founders</h2>
+        <p style="color:#A9BCB2;">
             Built with ambition. Powered by AI. Designed for students.
         </p>
     </div>
@@ -980,16 +1268,14 @@ for col, (name, role) in zip([col1, col2, col3], founders):
             unsafe_allow_html=True,
         )
 
-
 st.markdown(
     """
     <div style="
-        text-align: center;
-        color: #82998D;
-        font-size: 12px;
-        margin-top: 24px;
-        padding-bottom: 12px;
-    ">
+        text-align:center;
+        color:#82998D;
+        font-size:12px;
+        margin-top:24px;
+        padding-bottom:12px;">
         © 2026 StudyMate AI · Learn smarter, every day.
     </div>
     """,
