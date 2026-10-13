@@ -20,7 +20,7 @@ st.set_page_config(
 )
 
 DATA_FILE = "studymate_data.json"
-MODEL_NAME = "gemini-3.8-flash"
+MODEL_NAME = "gemini-3.5-flash"
 FOCUS_DURATION = 40 * 60
 
 
