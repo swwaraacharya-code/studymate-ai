@@ -58,9 +58,30 @@ BOOK_LOGO = """
 # =========================================================
 # LOGO HTML HELPER
 # =========================================================
-def logo_html(css_class="hero-logo"):
-    """Return the custom SVG logo without using the school logo."""
-    return f'<div class="{css_class}">{BOOK_LOGO}</div>'
+
+BOOK_LOGO = """
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="bookGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#D8BB7A"/>
+      <stop offset="100%" stop-color="#45C995"/>
+    </linearGradient>
+  </defs>
+  <circle cx="60" cy="60" r="56" fill="#102A22"/>
+  <g fill="none" stroke="url(#bookGradient)" stroke-width="4"
+     stroke-linecap="round" stroke-linejoin="round">
+    <path d="M60 46 C48 36 34 36 23 41 L23 78 C36 73 49 75 60 85 Z"/>
+    <path d="M60 46 C72 36 86 36 97 41 L97 78 C84 73 71 75 60 85 Z"/>
+    <path d="M60 46 L60 85"/>
+    <path d="M32 51 L46 51"/>
+    <path d="M32 61 L46 61"/>
+    <path d="M74 51 L88 51"/>
+    <path d="M74 61 L88 61"/>
+  </g>
+  <path d="M60 15 L63 23 L71 26 L63 29 L60 37 L57 29 L49 26 L57 23 Z"
+        fill="#D8BB7A"/>
+</svg>
+"""
 
 
 # =========================================================
