@@ -294,8 +294,7 @@ if st.session_state.focus_reminder_pending and not quiz_in_progress:
 
     @st.dialog("🌱 Time for a Focus Check-in!")
     def focus_reminder():
-        st.markdown(
-            """
+        st.markdown(  """
             <div style="
                 background: linear-gradient(135deg, #102A22, #174B38);
                 border: 1px solid #D8BB7A;
